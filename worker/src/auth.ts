@@ -121,7 +121,7 @@ export async function oauthExchange(request: Request, env: Env, githubFetch: typ
   `).bind(await digest(state), await digest(verifier), now()).first()
   if (!consumed) return fail(400, 'invalid_oauth')
   const tokenResponse = await githubFetch('https://github.com/login/oauth/access_token', {
-    method: 'POST', redirect: 'error',
+    method: 'POST', redirect: 'manual',
     headers: { Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       client_id: env.GITHUB_CLIENT_ID, client_secret: env.GITHUB_CLIENT_SECRET, code,
@@ -132,7 +132,7 @@ export async function oauthExchange(request: Request, env: Env, githubFetch: typ
   const tokenData = await tokenResponse.json<{ access_token?: string }>()
   if (!tokenData.access_token) return fail(401, 'invalid_oauth')
   const profileResponse = await githubFetch('https://api.github.com/user', {
-    redirect: 'error',
+    redirect: 'manual',
     headers: {
       Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + tokenData.access_token,
       'User-Agent': 'nlp-textbook-worker', 'X-GitHub-Api-Version': '2022-11-28'

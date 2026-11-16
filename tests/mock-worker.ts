@@ -1,6 +1,8 @@
 import { createApp } from '../worker/src/index'
 
 export default createApp(async (input, init) => {
+  // Match workerd's redirect modes so a mock cannot hide a runtime error.
+  if (init?.redirect === 'error') throw new TypeError('Unsupported redirect mode in workerd')
   const url = String(input)
   if (url === 'https://github.com/login/oauth/access_token') {
     const values = new URLSearchParams(String(init?.body))
