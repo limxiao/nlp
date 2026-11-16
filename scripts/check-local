@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export WRANGLER_SEND_METRICS=false
+export ASTRO_TELEMETRY_DISABLED=1
+cd "$(dirname "$0")/.."
+pnpm check
+PUBLIC_API_ORIGIN=http://127.0.0.1:8787 pnpm build
+pnpm test
+pnpm test:e2e

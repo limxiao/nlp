@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+.dev.vars*
+.env*
+!.env.example
+test-results/
+playwright-report/
+private/
+private-content/
+*.pdf
+*.sqlite*
+*.backup.json
+.DS_Store

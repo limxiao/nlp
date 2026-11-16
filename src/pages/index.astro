@@ -1,0 +1,197 @@
+---
+import '../styles/main.css'
+
+const apiOrigin = import.meta.env.PUBLIC_API_ORIGIN ??
+  (import.meta.env.DEV ? 'http://127.0.0.1:8787' : '')
+if (apiOrigin) {
+  const origin = new URL(apiOrigin)
+  const local = /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(apiOrigin)
+  if (origin.origin !== apiOrigin || (origin.protocol !== 'https:' && !local)) {
+    throw new Error('PUBLIC_API_ORIGIN must be an HTTPS origin without a path (localhost HTTP is allowed for development).')
+  }
+}
+const csp = [
+  "default-src 'none'", "script-src 'self'", "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:", "img-src 'self' blob:", "connect-src 'self' " + apiOrigin,
+  "base-uri 'none'", "object-src 'none'", "form-action 'none'"
+].join('; ')
+---
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="nlp-api" content={apiOrigin} />
+    {!import.meta.env.DEV && <meta http-equiv="Content-Security-Policy" content={csp} />}
+    <title>自然言語処理の基礎</title>
+  </head>
+  <body>
+    <a class="skip" href="#reading-content">本文へ移動</a>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">文</span><span>自然言語処理の基礎</span></div>
+      <div id="reader-tools" class="tools" hidden>
+        <button id="search-open" type="button" class="quiet">検索</button>
+        <button id="symbol-link" type="button" class="quiet" hidden>記号表</button>
+        <button id="font-smaller" type="button" class="icon-button" aria-label="本文の文字を小さくする">A−</button>
+        <button id="font-larger" type="button" class="icon-button" aria-label="本文の文字を大きくする">A+</button>
+        <button id="admin-open" type="button" class="quiet" hidden>管理</button>
+        <button id="logout" type="button" class="quiet">ログアウト</button>
+      </div>
+      <button id="theme" type="button" class="icon-button" aria-label="配色を切り替え" aria-pressed="false">◐</button>
+    </header>
+
+    <main id="login" class="login-layout">
+      <div class="cover" aria-hidden="true">
+        <div class="cover-copy">
+          <div class="cover-title">自然言語<br />処理の基礎</div>
+          <span class="cover-rule"></span>
+        </div>
+        <div class="cover-decoration"></div>
+      </div>
+      <section class="login-card" aria-labelledby="login-title">
+        <p class="eyebrow">オンライン教科書</p>
+        <h1 id="login-title">閲覧ログイン</h1>
+        <p class="muted">管理者から共有されたパスワードを入力してください。</p>
+        <form id="login-form">
+          <label for="viewer-password">閲覧パスワード</label>
+          <input id="viewer-password" type="password" autocomplete="current-password" required maxlength="256" />
+          <button type="submit" class="primary">教科書を開く <span aria-hidden="true">→</span></button>
+        </form>
+        <p id="login-error" class="feedback" role="alert"></p>
+        <div class="oauth-line"><button id="github" type="button" class="quiet">管理者は GitHub でログイン</button></div>
+      </section>
+    </main>
+
+    <div id="reader" class="reader-layout" hidden>
+      <aside class="left-panel">
+        <details id="toc-panel" open>
+          <summary>目次</summary>
+          <nav id="toc" aria-label="目次"></nav>
+        </details>
+      </aside>
+      <main id="reading-content" class="article-wrap" tabindex="-1">
+        <div id="breadcrumbs" class="crumbs" aria-label="現在位置"></div>
+        <div class="article-heading">
+          <h1 id="content-title"></h1>
+          <div class="article-actions">
+            <button id="copy-link" type="button" class="quiet" hidden>リンクをコピー</button>
+            <button id="edit-open" type="button" class="primary" hidden>編集</button>
+          </div>
+        </div>
+        <p id="page-info" class="page-info"></p>
+        <p id="content-notice" class="notice" hidden></p>
+        <article id="prose" class="prose"></article>
+        <nav id="neighbors" class="neighbors" aria-label="前後の章節"></nav>
+      </main>
+      <aside class="right-panel">
+        <div class="outline-title">このページ</div>
+        <nav id="outline" aria-label="本文内見出し"></nav>
+      </aside>
+    </div>
+
+    <dialog id="search-dialog" class="dialog" aria-labelledby="search-title">
+      <div class="dialog-title"><h2 id="search-title">教科書を検索</h2><button class="quiet" data-close type="button">閉じる</button></div>
+      <form id="search-form" class="inline-form">
+        <label class="sr-only" for="search-input">検索語</label>
+        <input id="search-input" type="search" maxlength="80" required />
+        <button class="primary" type="submit">検索</button>
+      </form>
+      <p id="search-feedback" class="muted" role="status"></p>
+      <div id="search-results"></div>
+      <button type="button" id="search-more" class="quiet" hidden>さらに表示</button>
+    </dialog>
+
+    <dialog id="admin-dialog" class="dialog" aria-labelledby="admin-title">
+      <div class="dialog-title"><h2 id="admin-title">管理</h2><button class="quiet" data-close type="button">閉じる</button></div>
+      <div class="management-row">
+        <button id="create-open" class="primary" type="button">章節を追加</button>
+        <button id="backup" class="quiet" type="button">バックアップを取得</button>
+      </div>
+      <h3>閲覧パスワードの管理</h3>
+      <form id="password-form">
+        <label for="new-password">新しい閲覧パスワード</label>
+        <div class="inline-form"><input id="new-password" type="password" minlength="16" maxlength="256" autocomplete="new-password" required />
+          <button id="random-password" type="button" class="quiet">生成</button>
+          <button id="show-password" type="button" class="quiet" aria-pressed="false">表示</button>
+        </div>
+        <p class="muted">16文字以上。更新すると、閲覧者は新しいパスワードでのログインが必要になります。</p>
+        <button class="primary" type="submit">パスワードを更新</button>
+      </form>
+      <p id="admin-feedback" class="feedback" role="status"></p>
+    </dialog>
+
+    <dialog id="editor-dialog" class="dialog editor-dialog" aria-labelledby="editor-title">
+      <div class="dialog-title"><h2 id="editor-title">章節を編集</h2><button id="editor-close" class="quiet" type="button">閉じる</button></div>
+      <form id="section-form">
+        <div class="field-grid">
+          <label>タイトル<input name="title" required maxlength="200" /></label>
+          <label>章節番号<input name="number" maxlength="32" /></label>
+          <label>表示順<input name="position" type="number" min="0" max="1000000" required /></label>
+          <div class="select-field"><label for="field-status">校正状態</label><select name="status" id="field-status"><option value="missing">未登録</option><option value="draft">下書き</option><option value="review">校正待ち</option><option value="verified">確認済み</option></select></div>
+          <div class="select-field" id="kind-field"><label for="field-kind">種類</label><select name="kind" id="field-kind"><option value="chapter">章</option><option value="section">節</option><option value="subsection">小節</option><option value="exercises">演習問題</option><option value="symbols">記号表</option><option value="bibliography">参考文献</option><option value="frontmatter">その他</option></select></div>
+          <div class="select-field" id="parent-field"><label for="field-parent_id">親の章節</label><select name="parent_id" id="field-parent_id"></select></div>
+          <div class="select-field"><label for="field-published">公開状態</label><select name="published" id="field-published"><option value="1">閲覧者に公開</option><option value="0">管理者のみ</option></select></div>
+        </div>
+        <details class="source-details">
+          <summary>出典・ページ番号</summary>
+          <div class="field-grid">
+            <label>印刷ページ開始<input name="print_from" type="number" min="1" max="100000" /></label>
+            <label>印刷ページ終了<input name="print_to" type="number" min="1" max="100000" /></label>
+            <label>印刷ページ表示<input name="print_label" maxlength="48" placeholder="例 xii–xiv" /></label>
+            <label>元 PDF 名<input name="source_file" maxlength="240" /></label>
+            <label>PDF ページ開始<input name="source_from" type="number" min="1" max="100000" /></label>
+            <label>PDF ページ終了<input name="source_to" type="number" min="1" max="100000" /></label>
+          </div>
+        </details>
+        <div class="editor-split">
+          <section><h3>Markdown / LaTeX</h3><div id="code-editor"></div></section>
+          <section><h3>プレビュー</h3><div id="preview" class="prose"></div></section>
+        </div>
+        <p id="math-feedback" class="feedback" role="status"></p>
+        <div class="management-row">
+          <button id="save-section" class="primary" type="submit">保存</button>
+          <button id="editor-discard" class="quiet" type="button">編集を破棄</button>
+          <button id="history-open" class="quiet" type="button">編集履歴</button>
+          <button id="asset-open" class="quiet" type="button">図版の管理</button>
+          <button id="delete-section" class="danger" type="button">章節を削除</button>
+        </div>
+      </form>
+      <p id="editor-feedback" class="feedback" role="status"></p>
+    </dialog>
+
+    <dialog id="history-dialog" class="dialog" aria-labelledby="history-title">
+      <div class="dialog-title"><h2 id="history-title">編集履歴</h2><button class="quiet" data-close type="button">閉じる</button></div>
+      <div id="history-list"></div>
+      <button id="history-more" class="quiet" type="button" hidden>さらに表示</button>
+      <pre id="history-diff" class="diff" hidden></pre>
+      <button id="restore" class="primary" type="button" hidden>この版に復元</button>
+      <p id="history-feedback" class="feedback" role="status"></p>
+    </dialog>
+
+    <dialog id="asset-dialog" class="dialog" aria-labelledby="asset-title">
+      <div class="dialog-title"><h2 id="asset-title">図版の管理</h2><button class="quiet" data-close type="button">閉じる</button></div>
+      <form id="asset-form">
+        <div class="select-field"><label for="field-replacement">参照の交換先</label><select name="replacement" id="field-replacement"></select></div>
+        <label>画像ファイル（WebP、PNG、JPEG）<input name="file" type="file" accept="image/webp,image/png,image/jpeg" required /></label>
+        <label>代替テキスト<input name="alt" required maxlength="250" /></label>
+        <label>キャプション<input name="caption" maxlength="500" /></label>
+        <label>元 PDF 名<input name="source_file" maxlength="240" /></label>
+        <div class="field-grid">
+          <label>PDF ページ<input name="source_page" type="number" min="1" max="100000" /></label>
+          <label>印刷ページ<input name="print_page" type="number" min="1" max="100000" /></label>
+        </div>
+        <button class="primary" type="submit">図版を追加して参照を挿入</button>
+      </form>
+      <div id="asset-list"></div>
+      <p id="asset-feedback" class="feedback" role="status"></p>
+    </dialog>
+
+    <div id="toast" role="status" hidden></div>
+    <noscript><p>教科書を閲覧するには JavaScript を有効にしてください。</p></noscript>
+    <script>
+      import '../lib/app'
+    </script>
+  </body>
+</html>

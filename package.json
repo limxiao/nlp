@@ -1,0 +1,42 @@
+{
+  "name": "nlp-textbook",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1",
+    "build": "astro build",
+    "preview": "astro preview --host 127.0.0.1",
+    "api:dev": "wrangler dev --ip 127.0.0.1 --port 8787",
+    "db:local": "wrangler d1 migrations apply nlp --local",
+    "check": "tsc --noEmit && tsc --noEmit -p worker/tsconfig.json",
+    "test": "node --test tests/api.test.mjs",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.10.0",
+    "@codemirror/lang-markdown": "^6.5.0",
+    "@codemirror/language": "^6.12.0",
+    "@codemirror/state": "^6.5.2",
+    "@codemirror/view": "^6.39.0",
+    "@lezer/highlight": "^1.2.3",
+    "astro": "7.4.12",
+    "diff": "^8.0.3",
+    "katex": "0.19.1",
+    "markdown-it": "^14.1.0",
+    "markdown-it-footnote": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261115.1",
+    "@playwright/test": "^1.56.1",
+    "@types/katex": "^0.16.7",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.50.0"
+  }
+}

@@ -1,0 +1,29 @@
+name = "nlp-textbook"
+main = "worker/src/index.ts"
+compatibility_date = "2026-11-13"
+
+[vars]
+SITE_ORIGIN = "http://127.0.0.1:4321"
+GITHUB_CLIENT_ID = ""
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nlp"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "worker/migrations"
+
+[env.production.vars]
+SITE_ORIGIN = "https://limxiao.github.io"
+GITHUB_CLIENT_ID = ""
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "nlp"
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "worker/migrations"
+
+[env.production.triggers]
+crons = ["23 18 * * *"]
+
+[env.production.observability]
+enabled = false
